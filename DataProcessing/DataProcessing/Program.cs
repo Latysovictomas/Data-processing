@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 
 namespace DataProcessing
 {
@@ -119,17 +120,17 @@ namespace DataProcessing
             int min = 1;
             int gradeCount = rnd.Next(1, 11); // generates 10 grades
             double randomGrade;
-            for(int i=0; i<gradeCount; i++)
+            for (int i = 0; i < gradeCount; i++)
             {
                 randomGrade = min + (rnd.NextDouble() * (max - min));
                 st.AddGrade(Math.Round(randomGrade, 1));
             }
             double examGrade = min + (rnd.NextDouble() * (max - min));
-            st.SetExamGrade(Math.Round(examGrade,1));
+            st.SetExamGrade(Math.Round(examGrade, 1));
 
             return st;
         }
-            static Student AskGrades(Student st) {
+        static Student AskGrades(Student st) {
             // Grades and exam by user
             Console.WriteLine("Enter homework grade: ");
             string input = Console.ReadLine();
@@ -162,9 +163,13 @@ namespace DataProcessing
             return grade >= 1 & grade <= 10;
         }
 
-        static void PrintTable(List<Student> students, bool isMedian)
+        static void PrintTable(List<Student> students, int caseNumber)
         {
-            if (isMedian)
+            // sort students by surname before printing
+            students.Sort((x, y) => String.Compare(x.GetSurname(), y.GetSurname()));
+            
+
+            if (caseNumber == 1)
             {
                 Console.WriteLine("{0,-20}{1}{2,30}", "Surname", "Name", "Final points (Med.)");
                 Console.WriteLine("{0}", "-------------------------------------------------------");
@@ -173,7 +178,8 @@ namespace DataProcessing
                     Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.GetFinal(true));
                 }
             }
-            else {
+            else if (caseNumber == 2)
+            {
                 Console.WriteLine("{0,-20}{1}{2,30}", "Surname", "Name", "Final points (Avg.)");
                 Console.WriteLine("{0}", "-------------------------------------------------------");
                 foreach (Student st in students)
@@ -181,115 +187,192 @@ namespace DataProcessing
                     Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.GetFinal());
                 }
             }
-
+            else if (caseNumber == 3)
+            {
+                Console.WriteLine("{0,-15}{1}{2,30}{3,25}", "Surname", "Name", "Final points (Avg.)", "Final points (Med.)");
+                Console.WriteLine("{0}", "--------------------------------------------------------------------------");
+                foreach (Student st in students)
+                {
+                    Console.WriteLine("{0,-15}{1}{2,27}{3,25}", st.GetSurname(), st.GetName(), st.GetFinal(), st.GetFinal(true));
+                }
+            }
+        
         }
 
-        static void Main(string[] args)
-        {
-            List<Student> students = new List<Student>();
-            bool addingStudents = true;
-            while (addingStudents)
-            {
-                Student st = new Student();
-                Console.WriteLine("Enter Name: ");
-                st.SetName(Console.ReadLine());
-                Console.WriteLine("Enter Surname: ");
-                st.SetSurname(Console.ReadLine());
-
-
-
-                Console.WriteLine("Generate grades randomly? (y/n)");
-                string genGrades = Console.ReadLine();
-                bool notValid = true;
-                while (notValid)
+            static void AddStudentsManually(List<Student> students) {
+                bool addingStudents = true;
+                while (addingStudents)
                 {
-                    if (genGrades.ToLower().Equals("n"))
+                    Student st = new Student();
+                    Console.WriteLine("Enter Name: ");
+                    st.SetName(Console.ReadLine());
+                    Console.WriteLine("Enter Surname: ");
+                    st.SetSurname(Console.ReadLine());
+
+
+
+                    Console.WriteLine("Generate grades randomly? (y/n)");
+                    string genGrades = Console.ReadLine();
+                    bool notValid = true;
+                    while (notValid)
                     {
-                        // Grades and exam by user
-                        st = AskGrades(st);
+                        if (genGrades.ToLower().Equals("n"))
+                        {
+                            // Grades and exam by user
+                            st = AskGrades(st);
+                            notValid = false;
+                        }
+                        else if (genGrades.ToLower().Equals("y"))
+                        {
+                            // Randomly
+                            st = GenerateGradesRandomly(st);
+
+                            notValid = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Wrong input. Enter y or n: ");
+                            genGrades = Console.ReadLine();
+                            notValid = true;
+                        }
+                    }
+
+
+
+                    // Add student
+                    students.Add(st);
+
+
+                    // Ask for more students
+                    Console.WriteLine("Create new student? (y/n): ");
+                    string yesno = Console.ReadLine();
+                    notValid = true;
+                    while (notValid)
+                    {
+                        if (yesno.ToLower().Equals("n"))
+                        {
+                            addingStudents = false;
+                            notValid = false;
+                        }
+                        else if (yesno.ToLower().Equals("y"))
+                        {
+                            addingStudents = true;
+                            notValid = false;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Wrong input. Enter y or n: ");
+                            yesno = Console.ReadLine();
+                            notValid = true;
+                        }
+                    }
+                }
+            }
+
+            static void Main(string[] args)
+            {
+                List<Student> students = new List<Student>();
+
+
+                Console.WriteLine("Do you want to add students from file? (y/n)");
+                string answer = Console.ReadLine();
+                bool notValid = true;
+                while (notValid) {
+                    if (answer.ToLower().Equals("n")) {
+
+                        //read from user input
+                        AddStudentsManually(students);
                         notValid = false;
                     }
-                    else if (genGrades.ToLower().Equals("y"))
+
+                    else if (answer.ToLower().Equals("y"))
                     {
-                        // Randomly
-                        st = GenerateGradesRandomly(st);
+                        // Read from file
+                        string textFile = "students.txt";
+                        string currentDirectory = Directory.GetCurrentDirectory();
+                        string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + textFile);
+                        string[] lines = File.ReadAllLines(fullPathToFile);
+
+                        for (int i = 1; i < lines.Length; i++) // for each student in file
+                        {
+                            Student st = new Student();
+                            string[] line = lines[i].Split(" ");
+                            List<string> student = new List<string>(line);
+
+                            st.SetName(student[1]);
+                            st.SetSurname(student[0]);
+                            double examGrade = double.Parse(student[student.Count - 1]);
+                            st.SetExamGrade(examGrade);
+                            student.RemoveAt(0);
+                            student.RemoveAt(0);
+                            student.RemoveAt(student.Count - 1);
+                            foreach (string grade in student)
+                            {
+                                st.AddGrade(double.Parse(grade));
+                            }
+
+                            students.Add(st);
+
+                        }
+
 
                         notValid = false;
                     }
                     else
                     {
                         Console.WriteLine("Wrong input. Enter y or n: ");
-                        genGrades = Console.ReadLine();
+                        answer = Console.ReadLine();
                         notValid = true;
                     }
+
                 }
 
 
 
 
-                // Add student
-                students.Add(st);
 
 
-                // Ask for more students
-                Console.WriteLine("Create new student? (y/n): ");
-                string yesno = Console.ReadLine();
-                notValid = true;
-                while (notValid)
+
+
+
+
+
+
+
+                // Print results
+                bool printingResults = true;
+                while (printingResults)
                 {
-                    if (yesno.ToLower().Equals("n"))
+                    Console.WriteLine("To print median results enter '1',\nTo print average results enter '2',\nTo print all results enter '3',\nTo terminate enter '4': ");
+                    int caseSwitch = int.Parse(Console.ReadLine());
+                    switch (caseSwitch)
                     {
-                        addingStudents = false;
-                        notValid = false;
+                        case 1:
+                            Console.WriteLine("Printing median results...");
+                            PrintTable(students, 1);
+                            break;
+                        case 2:
+                            Console.WriteLine("Printing average results...");
+                            PrintTable(students, 2);
+                            break;
+                        case 3:
+                            Console.WriteLine("Printing all results...");
+                            PrintTable(students, 3);
+                            break;
+                        case 4:
+                            printingResults = false;
+                            break;
+                        default:
+                            Console.WriteLine("Printing average results by default...");
+                            PrintTable(students, 2);
+                            Console.WriteLine("Default case");
+                            break;
                     }
-                    else if (yesno.ToLower().Equals("y"))
-                    {
-                        addingStudents = true;
-                        notValid = false;
-                    }
-                    else {
-                        Console.WriteLine("Wrong input. Enter y or n: ");
-                        yesno = Console.ReadLine();
-                        notValid = true;
-                    }
-                }
-            }
 
 
-
-            
-
-
-            // Print results
-            bool printingResults = true;
-            while (printingResults)
-            {
-                Console.WriteLine("To print average results enter '1', to print median results enter '2', to terminate enter '3': ");
-                int caseSwitch = int.Parse(Console.ReadLine());
-                switch (caseSwitch)
-                {
-                    case 1:
-                        Console.WriteLine("Printing average results...");
-                        PrintTable(students, false);
-                        break;
-                    case 2:
-                        Console.WriteLine("Printing median results...");
-                        PrintTable(students, true);
-                        break;
-                    case 3:
-                        printingResults = false;
-                        break;
-                    default:
-                        Console.WriteLine("Printing average results by default...");
-                        PrintTable(students, false);
-                        Console.WriteLine("Default case");
-                        break;
                 }
 
 
             }
-
-
         }
     }
-}
