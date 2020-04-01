@@ -12,6 +12,9 @@ namespace DataProcessing
         private double average;
         private double median;
         private double exam;
+        private string status;
+        private double finalMedian;
+        private double finalAVG;
 
         public Student() { }
 
@@ -85,28 +88,49 @@ namespace DataProcessing
             this.median = (size % 2 != 0) ? (double)this.grades[middle] : ((double)this.grades[middle] + (double)this.grades[middle - 1]) / 2;
         }
 
-        public double GetFinal(bool isMedian = false)
+        public double CalcFinal(bool isMedian = false)
         {
 
 
             if (isMedian == true)
             {
                 this.CalMedian();
-                return Math.Round((0.3 * this.median) + (0.7 * this.exam), 2);
+                this.finalMedian = Math.Round((0.3 * this.median) + (0.7 * this.exam), 2);
+                return this.finalMedian;
             }
             else
             {
                 this.CalAverage();
-                return Math.Round((0.3 * this.average) + (0.7 * this.exam), 2);
+                this.finalAVG = Math.Round((0.3 * this.average) + (0.7 * this.exam), 2);
+                return this.finalAVG;
             }
+        }
+        public double GetFinalAVG() {
+            return this.finalAVG;
+        }
+
+        public void SetStatus(double final)
+        {
+
+            if (final >= 5)
+            {
+                this.status = "passed";
+            }
+            else {
+                this.status = "failed";
+            }
+
+        }
+        public string GetStatus() {
+            return this.status;
         }
 
         public void PrintStudentInfo()
         {
             Console.WriteLine("Name: " + this.name);
             Console.WriteLine("Surname: " + this.surname);
-            Console.WriteLine("final average: " + this.GetFinal(false));
-            Console.WriteLine("final median: " + this.GetFinal(true));
+            Console.WriteLine("final average: " + this.CalcFinal(false));
+            Console.WriteLine("final median: " + this.CalcFinal(true));
             foreach (double grade in this.grades)
             {
                 Console.WriteLine("Grade: " + grade);

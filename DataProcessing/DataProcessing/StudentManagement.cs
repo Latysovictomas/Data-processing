@@ -72,7 +72,7 @@ namespace DataProcessing
                 Console.WriteLine("{0}", "-------------------------------------------------------");
                 foreach (Student st in students)
                 {
-                    Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.GetFinal(true));
+                    Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.CalcFinal(true));
                 }
             }
             else if (caseNumber == 2)
@@ -81,7 +81,7 @@ namespace DataProcessing
                 Console.WriteLine("{0}", "-------------------------------------------------------");
                 foreach (Student st in students)
                 {
-                    Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.GetFinal());
+                    Console.WriteLine("{0,-20}{1}{2,30}", st.GetSurname(), st.GetName(), st.CalcFinal());
                 }
             }
             else if (caseNumber == 3)
@@ -90,7 +90,7 @@ namespace DataProcessing
                 Console.WriteLine("{0}", "--------------------------------------------------------------------------");
                 foreach (Student st in students)
                 {
-                    Console.WriteLine("{0,-15}{1}{2,27}{3,25}", st.GetSurname(), st.GetName(), st.GetFinal(), st.GetFinal(true));
+                    Console.WriteLine("{0,-15}{1}{2,27}{3,25}", st.GetSurname(), st.GetName(), st.CalcFinal(), st.CalcFinal(true));
                 }
             }
 
@@ -168,9 +168,9 @@ namespace DataProcessing
             return students;
         }
 
-        private static List<Student> ReadStudentsFromFile(List<Student> students)
+        public static List<Student> ReadStudentsFromFile(List<Student> students, string textFile = "students.txt")
         {
-            string textFile = "students.txt";
+            //string textFile = "students.txt";
             string currentDirectory = Directory.GetCurrentDirectory();
             string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + textFile);
             string[] lines;
@@ -277,6 +277,137 @@ namespace DataProcessing
 
             }
             return students;
+        }
+
+        private static int GenerateGrade()
+        {
+            Random rnd = new Random();
+            int grade = rnd.Next(1, 11);
+            return grade;
+        }
+
+
+
+        private static List<string> GenerateRandomStudentList(int length)
+        {
+            // Surname Name HW1 HW2 HW3 HW4 HW5 Exam
+
+            string surname = "Surname";
+            string name = "Name";
+            List<string> lines = new List<string>();
+            for (int i = 1; i < length + 1; i++)
+            {
+
+                lines.Add(surname + i + " " + name + i + " " + GenerateGrade() + " " + GenerateGrade() + " " + GenerateGrade() + " " + GenerateGrade() + " " + GenerateGrade() + " " + GenerateGrade());
+            }
+
+            return lines;
+        }
+
+        //static void FileCreation(List<string> lines, int length1, int length2, int length3, int length4) {
+
+
+        private static void FileCreation(List<string> lines)
+        {
+
+            string filename = "studentList";
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + filename + lines.Count + ".txt");
+
+
+
+            using (System.IO.StreamWriter file =
+            new System.IO.StreamWriter(fullPathToFile))
+            {
+
+
+                file.WriteLine("Surname Name HW1 HW2 HW3 HW4 HW5 Exam");
+
+                for (int i = 0; i < lines.Count; i++)
+                {
+                    file.WriteLine(lines[i]);
+                }
+
+
+            }
+        }
+
+
+        private static void SaveListToFile(List<Student> studentList, string filename)
+        {
+
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + filename + ".txt");
+            using (System.IO.StreamWriter file =
+                new System.IO.StreamWriter(fullPathToFile))
+            {
+
+                file.WriteLine("Surname Name Final Status");
+                foreach (Student stud in studentList)
+                {
+                    file.WriteLine(stud.GetSurname() + " " + stud.GetName() + " " + stud.GetFinalAVG() + " " + stud.GetStatus());
+                }
+
+            }
+        }
+
+
+        public static void RandomStudentSpeedRateAnalysis()
+        {
+            // v0.4
+
+            //Console.WriteLine("Student generation...");
+            DateTime totalTime1 = DateTime.Now;
+
+            List<Student> studentsFromFiles = new List<Student>();
+            int length1 = 10000;
+            int length2 = 100000;
+            int length3 = 1000000;
+            int length4 = 10000000;
+            int[] lengths = { length1, length2, length3};
+            foreach (int length in lengths)
+            {
+                DateTime dt1 = DateTime.Now;
+                Console.WriteLine("Generating of length: " + length);
+                List<string> lines = GenerateRandomStudentList(length);
+                //Console.WriteLine("Saving to files...");
+                FileCreation(lines);
+                lines.Clear(); // Clear list
+
+                //Console.WriteLine("Reading students...");
+                studentsFromFiles = StudentManagement.ReadStudentsFromFile(studentsFromFiles, "studentList" + length + ".txt");
+                //Console.WriteLine("Sorting passed and failed students...");
+                List<Student> passedList = new List<Student>();
+                List<Student> failedList = new List<Student>();
+                foreach (Student stud in studentsFromFiles)
+                {
+                    double final = stud.CalcFinal();
+                    stud.SetStatus(final);
+
+                    if (stud.GetStatus() == "passed")
+                    {
+                        passedList.Add(stud);
+                    }
+                    else
+                    {
+                        failedList.Add(stud);
+                    }
+                }
+                //Console.WriteLine("Saving sorted students...");
+                SaveListToFile(passedList, "passedStudents");
+                SaveListToFile(failedList, "failedStudents");
+
+
+
+                DateTime dt2 = DateTime.Now;
+                Console.WriteLine("Elapsed time: " + (dt2 - dt1));
+                Console.WriteLine();
+
+
+            }
+
+            DateTime totalTime2 = DateTime.Now;
+            Console.WriteLine("Total elapsed time: " + (totalTime2 - totalTime1));
         }
 
 
