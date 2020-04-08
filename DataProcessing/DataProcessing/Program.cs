@@ -9,6 +9,7 @@ namespace DataProcessing
     {
 
 
+
         private static void run() {
             
 
@@ -23,18 +24,22 @@ namespace DataProcessing
             bool notValid = true;
             while (notValid)
             {
-                if (yesno.ToLower().Equals("n"))
+                if (yesno.ToLower().Equals("y"))
                 {
+                    // generating - y/n, container: list - 0, linkedList - 1, Queue - 2 
 
+                    StudentManagement.RandomStudentSpeedRateAnalysis(true, 0);
+                    StudentManagement.AskSpeedRateAnalysisNoGeneration(students);
                     StudentManagement.AddFromFileOrManually(students);
                     StudentManagement.PrintResults(students);
                     notValid = false;
+
+
                 }
-                else if (yesno.ToLower().Equals("y"))
+                else if (yesno.ToLower().Equals("n"))
                 {
-                    StudentManagement.RandomStudentSpeedRateAnalysis();
-                    StudentManagement.AddFromFileOrManually(students);
-                    StudentManagement.PrintResults(students);
+
+                    StudentManagement.AskSpeedRateAnalysisNoGeneration(students);
                     notValid = false;
                 }
                 else
