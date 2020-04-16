@@ -168,34 +168,44 @@ namespace DataProcessing
             return students;
         }
 
-        public static List<Student> ReadStudentsFromFile(List<Student> students, string textFile = "students.txt")
+        public static List<Student> ReadStudentsFromFile(List <Student> students, string textFile = "students.txt")
         {
-            //string textFile = "students.txt";
+         
             string currentDirectory = Directory.GetCurrentDirectory();
             string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + textFile);
-            string[] lines;
+           
             try {
-                lines = File.ReadAllLines(fullPathToFile);
-                for (int i = 1; i < lines.Length; i++) // for each student in file
+               
+
+                using (FileStream fs = File.Open(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
                 {
-                    Student st = new Student();
-                    string[] line = lines[i].Split(" ");
-                    List<string> student = new List<string>(line);
-
-                    st.SetName(student[1]);
-                    st.SetSurname(student[0]);
-                    double examGrade = double.Parse(student[student.Count - 1]);
-                    st.SetExamGrade(examGrade);
-                    student.RemoveAt(0);
-                    student.RemoveAt(0);
-                    student.RemoveAt(student.Count - 1);
-                    foreach (string grade in student)
+                    sr.ReadLine(); // skip first line
+                    string fileLine=null;
+                    while ((fileLine = sr.ReadLine()) != null)
                     {
-                        st.AddGrade(double.Parse(grade));
-                    }
+                        
+                        Student st = new Student();
+                        string[] line = fileLine.Split(" ");
+                        List<string> student = new List<string>(line);
+                        
+                        st.SetName(student[1]);
+                        st.SetSurname(student[0]);
+                        double examGrade = double.Parse(student[student.Count - 1]);
+                        st.SetExamGrade(examGrade);
+                        student.RemoveAt(0);
+                        student.RemoveAt(0);
+                        student.RemoveAt(student.Count - 1);
+                        foreach (string grade in student)
+                        {
+                            st.AddGrade(double.Parse(grade));
+                        }
 
-                    students.Add(st);
+                        students.Add(st);
+                    }
                 }
+
             }
             catch (FileNotFoundException e)
             {
@@ -207,6 +217,100 @@ namespace DataProcessing
 
             return students;
         }
+
+        public static LinkedList<Student> ReadStudentsFromFileToLinkedList(LinkedList<Student> students, int length, string textFile = "students.txt")
+        {
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + textFile);
+         
+            try
+            {
+                using (FileStream fs = File.Open(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    sr.ReadLine(); // skip first line
+                    string fileLine = null;
+                    while ((fileLine = sr.ReadLine()) != null)
+                    {
+
+                        Student st = new Student();
+                        string[] line = fileLine.Split(" ");
+                        List<string> student = new List<string>(line);
+
+                        st.SetName(student[1]);
+                        st.SetSurname(student[0]);
+                        double examGrade = double.Parse(student[student.Count - 1]);
+                        st.SetExamGrade(examGrade);
+                        student.RemoveAt(0);
+                        student.RemoveAt(0);
+                        student.RemoveAt(student.Count - 1);
+                        foreach (string grade in student)
+                        {
+                            st.AddGrade(double.Parse(grade));
+                        }
+
+                        students.AddLast(st);
+                    }
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine(e + "\n\nFile not found. Creating of length: " + length);
+                FileCreation(GenerateRandomStudentList(length));
+                ReadStudentsFromFileToLinkedList(students, length, textFile);
+            }
+
+            return students;
+        }
+
+        public static Queue<Student> ReadStudentsFromFileToQueue(Queue<Student> students, int length, string textFile = "students.txt")
+        {
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + textFile);
+     
+            try
+            {
+                using (FileStream fs = File.Open(fullPathToFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                using (BufferedStream bs = new BufferedStream(fs))
+                using (StreamReader sr = new StreamReader(bs))
+                {
+                    sr.ReadLine(); // skip first line
+                    string fileLine = null;
+                    while ((fileLine = sr.ReadLine()) != null)
+                    {
+
+                        Student st = new Student();
+                        string[] line = fileLine.Split(" ");
+                        List<string> student = new List<string>(line);
+
+                        st.SetName(student[1]);
+                        st.SetSurname(student[0]);
+                        double examGrade = double.Parse(student[student.Count - 1]);
+                        st.SetExamGrade(examGrade);
+                        student.RemoveAt(0);
+                        student.RemoveAt(0);
+                        student.RemoveAt(student.Count - 1);
+                        foreach (string grade in student)
+                        {
+                            st.AddGrade(double.Parse(grade));
+                        }
+
+                        students.Enqueue(st);
+                    }
+                }
+            }
+            catch (FileNotFoundException e)
+            {
+                Console.WriteLine(e + "\n\nFile not found. Creating of length: " + length);
+                FileCreation(GenerateRandomStudentList(length));
+                ReadStudentsFromFileToQueue(students, length, textFile);
+            }
+
+            return students;
+        }
+
+
 
 
         public static List<Student> AddFromFileOrManually(List<Student> students)
@@ -387,51 +491,33 @@ namespace DataProcessing
             }
         }
 
+        private static void CreateFileIfDoesNotExist(int length) {
+            string currentDirectory = Directory.GetCurrentDirectory();
+            string fullPathToFile = Path.Combine(currentDirectory, @"..\..\..\" + "studentList" + length + ".txt");
 
-        public static void RandomStudentSpeedRateAnalysis(bool generate = false, int container = 0)
+                // Create file if they do not exist
+                if (File.Exists(fullPathToFile) != true)
+                {
+                    Console.WriteLine("File "+length+" does not exist. Creating it...");
+                    FileCreation(GenerateRandomStudentList(length));
+                }
+        }
+
+        public static void RandomStudentSpeedRateAnalysis(bool generate = false, int container = 0, int strategy=1)
         {
             // v0.4, v0.5
-
-            //Console.WriteLine("Student generation...");
-            
-
-            List<Student> studentsFromFiles = new List<Student>();
             int length1 = 10000;
             int length2 = 100000;
             int length3 = 1000000;
-            int length4 = 10000000;
-            int[] lengths = { length1, length2, length3 };
-            string currentDirectory = Directory.GetCurrentDirectory();
-            string fullPathToFile10000 = Path.Combine(currentDirectory, @"..\..\..\" + "studentList" + 10000 + ".txt");
-            string fullPathToFile100000 = Path.Combine(currentDirectory, @"..\..\..\" + "studentList" + 100000 + ".txt");
-            string fullPathToFile1000000 = Path.Combine(currentDirectory, @"..\..\..\" + "studentList" + 1000000 + ".txt");
+            //int length4 = 10000000;
+            int[] lengths = { length1, length2, length3};
 
+            // Create files if they do not exist
             if (generate == false){
-                List<string> lines;
-                if (File.Exists(fullPathToFile10000) != true)
-            {
-                Console.WriteLine("File 10000 does not exist. Creating it...");
-                lines = GenerateRandomStudentList(length1);
-                //Console.WriteLine("Saving to files...");
-                FileCreation(lines);
-                lines.Clear(); // Clear list
-            }
-            if (File.Exists(fullPathToFile100000) != true)
-            {
-                Console.WriteLine("File 100000 does not exist. Creating it...");
-                lines = GenerateRandomStudentList(length2);
-                //Console.WriteLine("Saving to files...");
-                FileCreation(lines);
-                lines.Clear(); // Clear list
-            }
-            if (File.Exists(fullPathToFile1000000) != true)
-            {
-                Console.WriteLine("File does not exist. Creating it...");
-                lines = GenerateRandomStudentList(length3);
-                //Console.WriteLine("Saving to files...");
-                FileCreation(lines);
-                lines.Clear(); // Clear list
+                foreach (int length in lengths) {
+                    CreateFileIfDoesNotExist(length);
                 }
+                   
             }
 
 
@@ -450,83 +536,174 @@ namespace DataProcessing
                     lines.Clear(); // Clear list
                 }
 
-                    //Console.WriteLine("Reading students...");
-                    studentsFromFiles = StudentManagement.ReadStudentsFromFile(studentsFromFiles, "studentList" + length + ".txt");
+
+
                 //Console.WriteLine("Sorting passed and failed students...");
                 if (container == 0) {
                     Console.WriteLine("Using List with file length: " + length);
-                    List<Student> passedList = new List<Student>();
-                    List<Student> failedList = new List<Student>();
-                    foreach (Student stud in studentsFromFiles)
-                    {
-                        double final = stud.CalcFinal();
-                        stud.SetStatus(final);
 
-                        if (stud.GetStatus() == "passed")
+                    
+                    // reading from file to list
+                    List<Student> studentsFromFiles = new List<Student>();
+                    studentsFromFiles = StudentManagement.ReadStudentsFromFile(studentsFromFiles, "studentList" + length + ".txt");
+
+                    
+                    if (strategy == 1) // creating two list
+                    {
+                        List<Student> passedList = new List<Student>();
+                        List<Student> failedList = new List<Student>();
+                        foreach (Student stud in studentsFromFiles)
                         {
-                            passedList.Add(stud);
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+
+                            if (stud.GetStatus() == "passed")
+                            {
+                                passedList.Add(stud);
+                            }
+                            else
+                            {
+                                failedList.Add(stud);
+                            }
                         }
-                        else
-                        {
-                            failedList.Add(stud);
-                        }
+                        //Console.WriteLine("Saving sorted students...");
+                        SaveListToFile(passedList, "passedStudents");
+                        SaveListToFile(failedList, "failedStudents");
                     }
-                    //Console.WriteLine("Saving sorted students...");
-                    SaveListToFile(passedList, "passedStudents");
-                    SaveListToFile(failedList, "failedStudents");
+                    else {
+                        List<Student> failedList = new List<Student>();
+
+                        for (int i = studentsFromFiles.Count - 1; i >= 0; i--)
+                        {
+                            Student stud = studentsFromFiles[i];
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+
+                            if (stud.GetStatus() == "failed")
+                            {
+                                failedList.Add(stud);
+                                studentsFromFiles.RemoveAt(i);
+                            }
+                        }
+
+                        // shrink list to actual count of elements
+                        studentsFromFiles.TrimExcess();
+                        // save to files
+                        SaveListToFile(studentsFromFiles, "passedStudents");
+                        SaveListToFile(failedList, "failedStudents");
+                    }
+
+
                 }
                 else if (container == 1) { // LinkedList
-                    Console.WriteLine("\nUsing LinkedList with file length: " + length);
-                    LinkedList<Student> passedList = new LinkedList<Student>();
-                    LinkedList<Student> failedList = new LinkedList<Student>();
-
-                    foreach (Student stud in studentsFromFiles)
+                    Console.WriteLine("Using LinkedList with file length: " + length);
+                    //Console.WriteLine("Reading students...");
+                    LinkedList<Student> studentsFromFiles = new LinkedList<Student>();
+                    studentsFromFiles = StudentManagement.ReadStudentsFromFileToLinkedList(studentsFromFiles, length, "studentList" + length + ".txt");
+                    
+                    if (strategy == 1)
                     {
-                        double final = stud.CalcFinal();
-                        stud.SetStatus(final);
+                        
+                        LinkedList<Student> passedList = new LinkedList<Student>();
+                        LinkedList<Student> failedList = new LinkedList<Student>();
 
-                        if (stud.GetStatus() == "passed")
+                        foreach (Student stud in studentsFromFiles)
                         {
-                            passedList.AddLast(stud);
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+
+                            if (stud.GetStatus() == "passed")
+                            {
+                                passedList.AddLast(stud);
+                            }
+                            else
+                            {
+                                failedList.AddLast(stud);
+                            }
                         }
-                        else
-                        {
-                            failedList.AddLast(stud);
-                        }
+                        //Console.WriteLine("Saving sorted students...");
+                        SaveLinkedListToFile(passedList, "passedStudents");
+                        SaveLinkedListToFile(failedList, "failedStudents");
                     }
-                    //Console.WriteLine("Saving sorted students...");
-                    SaveLinkedListToFile(passedList, "passedStudents");
-                    SaveLinkedListToFile(failedList, "failedStudents");
+                    else {
+                        LinkedList<Student> failedList = new LinkedList<Student>();
+                        var node = studentsFromFiles.First;
+                        while (node != null)
+                        {
+                            Student stud = node.Value;
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+                            var next = node.Next;
+                            if (stud.GetStatus() == "failed")
+                            {
+                                failedList.AddLast(stud);
+                                studentsFromFiles.Remove(node);
+                            }
+                            node = next;
+                        }
+                        // save to files                          
+                        SaveLinkedListToFile(studentsFromFiles, "passedStudents");
+                        SaveLinkedListToFile(failedList, "failedStudents");
+
+                    }
                 }
                 else
                 { // Queue
-                    Console.WriteLine("\nUsing Queue with file length: " + length);
-                    Queue<Student>  passedList = new Queue<Student>();
-                    Queue<Student>  failedList = new Queue<Student>();
-
-                    foreach (Student stud in studentsFromFiles)
+                    Console.WriteLine("Using Queue with file length: " + length);
+                    Queue<Student> studentsFromFiles = new Queue<Student>();
+                    studentsFromFiles = StudentManagement.ReadStudentsFromFileToQueue(studentsFromFiles, length, "studentList" + length + ".txt");
+                    
+                    if (strategy == 1)
                     {
-                        double final = stud.CalcFinal();
-                        stud.SetStatus(final);
 
-                        if (stud.GetStatus() == "passed")
-                        {
-                            passedList.Enqueue(stud);
+                        
+                        Queue<Student> passedList = new Queue<Student>();
+                        Queue<Student> failedList = new Queue<Student>();
 
-                        }
-                        else
+                        foreach (Student stud in studentsFromFiles)
                         {
-                            failedList.Enqueue(stud);
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+
+                            if (stud.GetStatus() == "passed")
+                            {
+                                passedList.Enqueue(stud);
+
+                            }
+                            else
+                            {
+                                failedList.Enqueue(stud);
+                            }
                         }
+                        //Console.WriteLine("Saving sorted students...");
+                        SaveQueueToFile(passedList, "passedStudents");
+                        SaveQueueToFile(failedList, "failedStudents");
                     }
-                    //Console.WriteLine("Saving sorted students...");
-                    SaveQueueToFile(passedList, "passedStudents");
-                    SaveQueueToFile(failedList, "failedStudents");
+                    else { //strategy 2 queue
+                        Queue<Student> failedList = new Queue<Student>();
+                        int size = studentsFromFiles.Count;
+                        for (int i = 0; i < size; i++)
+                        {
+                            Student stud = studentsFromFiles.Dequeue();
+                            double final = stud.CalcFinal();
+                            stud.SetStatus(final);
+                            if (stud.GetStatus() == "failed")
+                            {
+                                failedList.Enqueue(stud);
+                            }
+
+                            else {
+                                studentsFromFiles.Enqueue(stud);
+                            }
+                        }
+                        // resize
+                        studentsFromFiles.TrimExcess();
+                        // save to files                          
+                        SaveQueueToFile(studentsFromFiles, "passedStudents");
+                        SaveQueueToFile(failedList, "failedStudents");
+
+                    }
                 }
-
-
-
-
 
                     DateTime dt2 = DateTime.Now;
                     Console.WriteLine("Elapsed time: " + (dt2 - dt1));
@@ -537,51 +714,15 @@ namespace DataProcessing
    
                 DateTime totalTime2 = DateTime.Now;              
                 Console.WriteLine("Total elapsed time: " + (totalTime2 - totalTime1));
-            
+                Console.WriteLine("");
+
+
+
+        }
+
+
+
  
-
-        }
-
-
-
-        public static void AskSpeedRateAnalysisNoGeneration(List<Student> students)
-        {
-
-            Console.WriteLine("v0.5: Perform speed rate analysis with no automatic generation for List, QUEUE and LinkedList? (y/n): ");
-            string yesno = Console.ReadLine();
-            bool notValid = true;
-            while (notValid)
-            {
-                if (yesno.ToLower().Equals("y"))
-                {
-                    // generating - y/n, container: list - 0, linkedList - 1, Queue - 2 
-                    for (int container = 0; container <= 2; container++)
-                    {
-                        StudentManagement.RandomStudentSpeedRateAnalysis(false, container);
-                    }
-
-                    StudentManagement.AddFromFileOrManually(students);
-                    StudentManagement.PrintResults(students);
-                    notValid = false;
-
-
-                }
-                else if (yesno.ToLower().Equals("n"))
-                {
-
-                    StudentManagement.AddFromFileOrManually(students);
-                    StudentManagement.PrintResults(students);
-                    notValid = false;
-                }
-                else
-                {
-                    Console.WriteLine("Wrong input. Enter y or n: ");
-                    yesno = Console.ReadLine();
-                    notValid = true;
-                }
-            }
-
-        }
     }
 
 }
